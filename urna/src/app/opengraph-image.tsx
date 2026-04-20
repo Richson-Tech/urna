@@ -128,7 +128,28 @@ export default async function OpengraphImage() {
             </div>
           </div>
 
-          <Seal />
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 10,
+            }}
+          >
+            <Seal />
+            <span
+              style={{
+                fontFamily: "Fraunces",
+                fontSize: 16,
+                letterSpacing: 5,
+                textTransform: "uppercase",
+                color: INK_SOFT,
+                display: "flex",
+              }}
+            >
+              Urna · Ballot Box
+            </span>
+          </div>
         </div>
 
         {/* Footer row */}
@@ -226,19 +247,11 @@ function Seal() {
       <rect x="-6" y="-8" width="12" height="3" fill={INK} />
       <line x1="-10" y1="4" x2="10" y2="4" stroke={INK} strokeWidth="1.4" />
       <line x1="-10" y1="8" x2="10" y2="8" stroke={INK} strokeWidth="1.4" />
-
-      {/* Wordmark along the bottom arc (rendered straight for simplicity) */}
-      <text
-        x="0"
-        y="78"
-        textAnchor="middle"
-        fontFamily="Fraunces"
-        fontSize="8"
-        letterSpacing="2"
-        fill={INK}
-      >
-        URNA · BALLOT BOX
-      </text>
+      {/* Note: Satori (the renderer behind next/og) does not support
+       * <text> inside SVG — only <path>. The former wordmark on the
+       * bottom arc was moved to a sibling HTML node in the caller.
+       * If you want a curved wordmark inside the seal itself, the
+       * letters would need to be supplied as path data. */}
     </svg>
   );
 }
