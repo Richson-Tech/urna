@@ -9,7 +9,7 @@
     "db:push": "prisma db push",
     "db:generate": "prisma generate",
     "db:seed": "tsx prisma/seed.ts",
-    "demo:tunnel": "cloudflared tunnel --url http://localhost:3000"
+    "demo:tunnel": "cloudflared tunnel --protocol http2 --url http://localhost:3000"
   },
   "dependencies": {
     "@prisma/client": "^6.1.0",
