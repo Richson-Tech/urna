@@ -1,0 +1,112 @@
+// Urna — database schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String     @id @default(cuid())
+  email     String     @unique
+  name      String
+  password  String
+  createdAt DateTime   @default(now())
+  elections Election[]
+}
+
+// Voting methods supported by Urna.
+// SINGLE    — pick exactly one option
+// APPROVAL  — pick any number of options
+// RANKED    — order all options; tallied via instant-runoff (IRV)
+enum VotingMethod {
+  SINGLE
+  APPROVAL
+  RANKED
+}
+
+enum ElectionStatus {
+  DRAFT
+  OPEN
+  CLOSED
+}
+
+model Election {
+  id            String          @id @default(cuid())
+  // Short, shareable code: 8 chars, URL-safe.
+  code          String          @unique
+  title         String
+  description   String?
+  method        VotingMethod    @default(SINGLE)
+  status        ElectionStatus  @default(DRAFT)
+  // If set, voters must present this passcode to cast a ballot.
+  passcode      String?
+  // If true, live results are visible publicly while the election is open.
+  publicResults Boolean         @default(true)
+  opensAt       DateTime?
+  closesAt      DateTime?
+  createdAt     DateTime        @default(now())
+  creator       User            @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  creatorId     String
+  options       Option[]
+  ballots       Ballot[]
+  audits        AuditEntry[]
+
+  @@index([creatorId])
+}
+
+model Option {
+  id         String    @id @default(cuid())
+  election   Election  @relation(fields: [electionId], references: [id], onDelete: Cascade)
+  electionId String
+  label      String
+  // Optional subtitle — e.g. party, bio, description
+  subtitle   String?
+  // Stable position for display ordering
+  position   Int
+
+  @@index([electionId])
+}
+
+// One Ballot per voter per election. The actual selections live in `payload`
+// as JSON (an array of option IDs — ordered for RANKED, a set for APPROVAL,
+// a single-element array for SINGLE). Storing as JSON keeps the schema simple
+// and leaves interpretation to the tally logic, which understands method.
+model Ballot {
+  id         String   @id @default(cuid())
+  election   Election @relation(fields: [electionId], references: [id], onDelete: Cascade)
+  electionId String
+  // Opaque, signed voter token — prevents duplicate votes without requiring
+  // a signed-in voter identity. One token → one ballot per election.
+  voterToken String
+  payload    String
+  // Short human-readable receipt (e.g. "X7-9K2-QFA") used to look up the
+  // ballot in the public audit log.
+  receipt    String   @unique
+  // Hash chain: sha256(prevHash || receipt || payload) — gives us a
+  // tamper-evident append-only log per election.
+  prevHash   String
+  hash       String
+  castAt     DateTime @default(now())
+
+  @@unique([electionId, voterToken])
+  @@index([electionId])
+}
+
+// Audit entries mirror ballots but store only non-sensitive metadata so the
+// full log can be shown publicly. Kept separate so a future change to privacy
+// policy doesn't risk exposing the payload table.
+model AuditEntry {
+  id         String   @id @default(cuid())
+  election   Election @relation(fields: [electionId], references: [id], onDelete: Cascade)
+  electionId String
+  receipt    String
+  prevHash   String
+  hash       String
+  castAt     DateTime @default(now())
+
+  @@index([electionId])
+}
