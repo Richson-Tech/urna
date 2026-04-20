@@ -23,9 +23,10 @@ Read [the manifesto](./src/app/manifesto/page.tsx) for the full pitch.
 ## Getting started
 
 ```bash
+cp .env.example .env     # fill in the three values
 npm install
-npx prisma db push
-npm run db:seed     # optional: populate three demo elections
+npx prisma db push       # creates prisma/dev.db
+npm run db:seed          # optional: populate three demo elections
 npm run dev
 ```
 
@@ -33,6 +34,29 @@ Open <http://localhost:3000>. If you seeded, sign in with:
 
 - **Email** · `demo@urna.example`
 - **Password** · `demo1234`
+
+## Running a live demo
+
+The app is designed to be run on a single machine (see *Architecture*
+below — SQLite + in-memory SSE). To show it to someone on the internet
+without deploying anywhere, pair a local server with a Cloudflare
+quick-tunnel:
+
+```bash
+# Terminal 1 — run the production build locally
+npm run build
+npm run start
+
+# Terminal 2 — expose it to the internet
+npm run demo:tunnel
+```
+
+Cloudflare prints a throwaway `https://*.trycloudflare.com` URL that
+forwards to your laptop. Share it, demo it, close both terminals when
+you're done. No accounts, no deployment, no DNS. **Remember to update
+`NEXT_PUBLIC_APP_URL` in `.env` to that tunnel URL and restart the
+server** so the in-app share links and QR codes point to the public
+URL instead of `localhost`.
 
 ## What's in the box
 
